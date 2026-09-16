@@ -26,10 +26,25 @@ export default function Dashboard() {
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
 
+  const openCreate = () => {
+    setEditingTask(null)
+    setIsDialogOpen(true)
+  }
+
+  const openEdit = (task: Task) => {
+    setEditingTask(task)
+    setIsDialogOpen(true)
+  }
+
+  const closeDialog = () => {
+    setIsDialogOpen(false)
+    setEditingTask(null)
+  }
+
   const handleCreate = async (data: TaskFormData) => {
     try {
       await createTask.mutateAsync(data)
-      setIsDialogOpen(false)
+      closeDialog()
       toast({ title: 'Task created' })
     } catch {
       toast({ title: 'Failed to create task', variant: 'destructive' })
@@ -40,7 +55,7 @@ export default function Dashboard() {
     if (!editingTask) return
     try {
       await updateTask.mutateAsync({ id: editingTask.id, ...data })
-      setEditingTask(null)
+      closeDialog()
       toast({ title: 'Task updated' })
     } catch {
       toast({ title: 'Failed to update task', variant: 'destructive' })
@@ -61,21 +76,26 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Tasks</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Task
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create Task</DialogTitle>
-            </DialogHeader>
-            <TaskForm onSubmit={handleCreate} isLoading={createTask.isPending} />
-          </DialogContent>
-        </Dialog>
+        <Button onClick={openCreate}>
+          <Plus className="mr-2 h-4 w-4" />
+          New Task
+        </Button>
       </div>
+
+      {/* Task form dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeDialog() }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingTask ? 'Edit Task' : 'Create Task'}</DialogTitle>
+          </DialogHeader>
+          <TaskForm
+            key={editingTask?.id || 'create'}
+            initial={editingTask}
+            onSubmit={editingTask ? handleUpdate : handleCreate}
+            isLoading={createTask.isPending || updateTask.isPending}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Filters */}
       <div className="flex gap-3">
