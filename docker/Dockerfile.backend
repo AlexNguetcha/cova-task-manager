@@ -1,0 +1,30 @@
+# ───────────────────────────────────────────
+# STAGE 1: Build with Maven
+# ───────────────────────────────────────────
+FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
+
+WORKDIR /app
+COPY backend/pom.xml .
+RUN mvn dependency:go-offline -B
+
+COPY backend/src ./src
+RUN mvn package -DskipTests -B
+
+# ───────────────────────────────────────────
+# STAGE 2: Runtime with JRE
+# ───────────────────────────────────────────
+FROM eclipse-temurin:17-jre-alpine
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
+
+EXPOSE 8080
+
+USER appuser
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+    CMD wget -qO- http://localhost:8080/actuator/health || exit 1
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
