@@ -1,0 +1,92 @@
+# GCP Cloud Build configuration
+# Alternative to GitHub Actions for GCP-native builds
+
+steps:
+  # ── Backend Build ──
+  - name: 'maven:3.9.6-eclipse-temurin-17-alpine'
+    entrypoint: 'mvn'
+    dir: 'backend'
+    args: ['package', '-DskipTests', '-B']
+    id: 'build-backend'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-f'
+      - 'docker/Dockerfile.backend'
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/cova-task-manager/backend:$SHORT_SHA'
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/cova-task-manager/backend:latest'
+      - '.'
+    id: 'docker-backend'
+
+  # ── Frontend Build ──
+  - name: 'node:20-alpine'
+    entrypoint: 'npm'
+    dir: 'frontend'
+    args: ['ci']
+    id: 'install-frontend'
+
+  - name: 'node:20-alpine'
+    entrypoint: 'npm'
+    dir: 'frontend'
+    args: ['run', 'build']
+    id: 'build-frontend'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-f'
+      - 'docker/Dockerfile.frontend'
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/cova-task-manager/frontend:$SHORT_SHA'
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/cova-task-manager/frontend:latest'
+      - '.'
+    id: 'docker-frontend'
+
+  # ── Push to Artifact Registry ──
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/cova-task-manager/backend:$SHORT_SHA']
+    id: 'push-backend'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/cova-task-manager/frontend:$SHORT_SHA']
+    id: 'push-frontend'
+
+  # ── Deploy to Cloud Run ──
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'cova-backend'
+      - '--image=europe-west1-docker.pkg.dev/$PROJECT_ID/cova-task-manager/backend:$SHORT_SHA'
+      - '--region=europe-west1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=SPRING_PROFILES_ACTIVE=gcp'
+      - '--add-cloudsql-instances=$PROJECT_ID:europe-west1:cova-mysql'
+      - '--set-secrets=MYSQL_USER=cova-db-user:latest,MYSQL_PASSWORD=cova-db-password:latest,JWT_SECRET=jwt-secret:latest'
+    id: 'deploy-backend'
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'cova-frontend'
+      - '--image=europe-west1-docker.pkg.dev/$PROJECT_ID/cova-task-manager/frontend:$SHORT_SHA'
+      - '--region=europe-west1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+    id: 'deploy-frontend'
+
+images:
+  - 'europe-west1-docker.pkg.dev/$PROJECT_ID/cova-task-manager/backend'
+  - 'europe-west1-docker.pkg.dev/$PROJECT_ID/cova-task-manager/frontend'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1800s
