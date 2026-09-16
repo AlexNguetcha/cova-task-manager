@@ -1,0 +1,170 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  # GCP Configuration
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: europe-west1
+  GCP_ARTIFACT_REPO: cova-task-manager
+
+  # Docker Images
+  BACKEND_IMAGE: europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cova-task-manager/backend
+  FRONTEND_IMAGE: europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cova-task-manager/frontend
+
+  # Cloud Run Services
+  BACKEND_SERVICE: cova-backend
+  FRONTEND_SERVICE: cova-frontend
+
+jobs:
+  # ─────────────────────────────────────────────
+  # JOB 1: Lint & Test Backend
+  # ─────────────────────────────────────────────
+  backend-tests:
+    name: Backend - Lint & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run unit & integration tests
+        run: mvn verify -B -Dspring.profiles.active=test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: backend/target/surefire-reports/
+
+  # ─────────────────────────────────────────────
+  # JOB 2: Lint & Build Frontend
+  # ─────────────────────────────────────────────
+  frontend-build:
+    name: Frontend - Lint & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint check
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+
+  # ─────────────────────────────────────────────
+  # JOB 3: Build & Push Docker Images
+  # ─────────────────────────────────────────────
+  docker-build:
+    name: Docker - Build & Push
+    needs: [backend-tests, frontend-build]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure Docker for GCP
+        run: |
+          gcloud auth configure-docker europe-west1-docker.pkg.dev
+
+      - name: Build & Push Backend Image
+        run: |
+          docker build \
+            -f docker/Dockerfile.backend \
+            -t ${{ env.BACKEND_IMAGE }}:${{ github.sha }} \
+            -t ${{ env.BACKEND_IMAGE }}:latest \
+            .
+          docker push ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          docker push ${{ env.BACKEND_IMAGE }}:latest
+
+      - name: Build & Push Frontend Image
+        run: |
+          docker build \
+            -f docker/Dockerfile.frontend \
+            -t ${{ env.FRONTEND_IMAGE }}:${{ github.sha }} \
+            -t ${{ env.FRONTEND_IMAGE }}:latest \
+            .
+          docker push ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          docker push ${{ env.FRONTEND_IMAGE }}:latest
+
+  # ─────────────────────────────────────────────
+  # JOB 4: Deploy to Cloud Run
+  # ─────────────────────────────────────────────
+  deploy:
+    name: Deploy - Cloud Run
+    needs: [docker-build]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Deploy Backend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.BACKEND_SERVICE }}
+          image: ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          region: ${{ env.GCP_REGION }}
+          env_vars: |
+            SPRING_PROFILES_ACTIVE=gcp
+            MYSQL_HOST=/cloudsql/${{ secrets.GCP_PROJECT_ID }}:europe-west1:cova-mysql
+            MYSQL_DATABASE=cova_tasks
+          secrets: |
+            MYSQL_USER=cova-db-user:latest
+            MYSQL_PASSWORD=cova-db-password:latest
+            JWT_SECRET=jwt-secret:latest
+
+      - name: Deploy Frontend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.FRONTEND_SERVICE }}
+          image: ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          region: ${{ env.GCP_REGION }}
+
+      - name: Get Cloud Run URLs
+        run: |
+          echo "✅ Backend URL: https://${{ env.BACKEND_SERVICE }}-${{ env.GCP_PROJECT_ID }}.${{ env.GCP_REGION }}.run.app"
+          echo "✅ Frontend URL: https://${{ env.FRONTEND_SERVICE }}-${{ env.GCP_PROJECT_ID }}.${{ env.GCP_REGION }}.run.app"
