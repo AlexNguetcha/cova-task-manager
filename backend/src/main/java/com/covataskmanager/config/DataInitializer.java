@@ -24,7 +24,7 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (userRepository.findByEmail("demo@cova.io").isPresent()) {
+        if (userRepository.findByEmail("demo@cova.africa").isPresent()) {
             log.info("Seed data already exists, skipping initialization.");
             return;
         }
@@ -33,54 +33,54 @@ public class DataInitializer implements CommandLineRunner {
 
         // ── Demo User ──
         var user = User.builder()
-                .name("Demo User")
-                .email("demo@cova.io")
+                .name("Agent Cova")
+                .email("demo@cova.africa")
                 .password(passwordEncoder.encode("demo1234"))
                 .build();
 
         user = userRepository.save(user);
-        log.info("Created demo user: {} <demo@cova.io> / password: demo1234", user.getId());
+        log.info("Created demo user: {} <demo@cova.africa> / password: demo1234", user.getId());
 
-        // ── Sample Tasks ──
+        // ── Sample Tasks (insurance-related) ──
         var tasks = taskRepository.saveAll(java.util.List.of(
                 Task.builder()
-                        .title("Design landing page")
-                        .description("Create wireframes and high-fidelity mockups for the marketing site.")
+                        .title("Finaliser contrat auto client Dupont")
+                        .description("Vérifier les pièces justificatives, calculer la prime annuelle et éditer le contrat d'assurance auto pour M. Dupont.")
                         .status(TaskStatus.TODO)
                         .user(user)
                         .build(),
                 Task.builder()
-                        .title("Set up CI/CD pipeline")
-                        .description("Configure GitHub Actions for automated testing, Docker build, and Cloud Run deployment.")
+                        .title("Relancer sinistre habitation n°2024-0891")
+                        .description("Contacter l'expert pour obtenir le rapport d'évaluation et relancer l'indemnisation du sinistre habitation.")
                         .status(TaskStatus.IN_PROGRESS)
                         .user(user)
                         .build(),
                 Task.builder()
-                        .title("Write API documentation")
-                        .description("Document all REST endpoints with request/response examples in Swagger/OpenAPI.")
+                        .title("Mettre à jour grille tarifaire santé")
+                        .description("Intégrer les nouveaux barèmes 2025 pour les garanties santé individuelles et familiales.")
                         .status(TaskStatus.COMPLETED)
                         .user(user)
                         .build(),
                 Task.builder()
-                        .title("Implement JWT refresh token")
-                        .description("Add refresh token endpoint and automatic token rotation on the frontend.")
+                        .title("Souscrire assurance vie client Martin")
+                        .description("Préparer le dossier de souscription, vérifier le questionnaire médical et programmer le prélèvement.")
                         .status(TaskStatus.TODO)
                         .user(user)
                         .build(),
                 Task.builder()
-                        .title("Optimize database queries")
-                        .description("Add proper indexing and analyze slow queries with Hibernate stats.")
+                        .title("Auditer portefeuille risques professionnels")
+                        .description("Analyser les 50 plus gros contrats PRO, identifier les écarts de cotisation et proposer des avenants.")
                         .status(TaskStatus.IN_PROGRESS)
                         .user(user)
                         .build(),
                 Task.builder()
-                        .title("Add pagination to task list")
-                        .description("Support page, size, and sort parameters on GET /api/tasks.")
+                        .title("Former équipe à la conformité RGPD")
+                        .description("Organiser la session de formation obligatoire sur la protection des données personnelles pour les 12 conseillers.")
                         .status(TaskStatus.COMPLETED)
                         .user(user)
                         .build()
         ));
 
-        log.info("Created {} sample tasks for demo user.", tasks.size());
+        log.info("Created {} insurance-related tasks for demo user.", tasks.size());
     }
 }

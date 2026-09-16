@@ -173,6 +173,15 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 Le backend démarre sur `http://localhost:8080`.
 Swagger UI : `http://localhost:8080/swagger-ui.html`
 
+> 💡 **Profils seed data** : les profils `dev` et `docker` créent automatiquement
+> un utilisateur de démonstration et des tâches échantillons.
+>
+> **Demo credentials :**
+> ```
+> Email:    demo@cova.africa
+> Password: demo1234
+> ```
+
 ### 3. Frontend (React + Vite)
 
 ```bash
