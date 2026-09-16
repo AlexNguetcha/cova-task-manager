@@ -1,9 +1,3 @@
-import { useToast as useToastOriginal } from '@/hooks/use-toast'
-
-// Re-export for convenience
-export { useToastOriginal as useToast }
-
-// Simple toast state — no need for reducer for this scope
 import { useState, useCallback } from 'react'
 
 interface Toast {
