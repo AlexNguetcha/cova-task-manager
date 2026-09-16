@@ -1,11 +1,15 @@
 package com.covataskmanager.dto;
 
+import com.covataskmanager.entity.TaskPriority;
+import com.covataskmanager.entity.TaskStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -21,4 +25,8 @@ public class TaskRequest {
     private String description;
 
     private String status;
+
+    private String priority;
+
+    private LocalDate dueDate;
 }

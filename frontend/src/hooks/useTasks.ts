@@ -2,14 +2,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import type { Task, TaskFormData } from '@/types'
 
-export function useTasks(status?: string, search?: string) {
+export function useTasks(status?: string, priority?: string, search?: string) {
   const params = new URLSearchParams()
   if (status) params.set('status', status)
+  if (priority) params.set('priority', priority)
   if (search) params.set('search', search)
   const qs = params.toString()
 
   return useQuery({
-    queryKey: ['tasks', { status, search }],
+    queryKey: ['tasks', { status, priority, search }],
     queryFn: async () => {
       const { data } = await api.get<Task[]>(`/tasks${qs ? `?${qs}` : ''}`)
       return data

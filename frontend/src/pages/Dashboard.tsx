@@ -3,9 +3,9 @@ import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/hooks/u
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Plus, Search, Loader2, Trash2, Edit3, CheckCircle2, Clock, Circle } from 'lucide-react'
-import type { Task, TaskStatus, TaskFormData } from '@/types'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Plus, Search, Loader2, Trash2, Edit3, CheckCircle2, Clock, Circle, AlertTriangle, Flag } from 'lucide-react'
+import type { Task, TaskStatus, TaskPriority, TaskFormData } from '@/types'
 import { useToast } from '@/hooks/use-toast'
 
 const statusConfig: Record<TaskStatus, { label: string; icon: typeof Circle; color: string }> = {
@@ -14,25 +14,31 @@ const statusConfig: Record<TaskStatus, { label: string; icon: typeof Circle; col
   COMPLETED: { label: 'Completed', icon: CheckCircle2, color: 'text-primary' },
 }
 
+const priorityConfig: Record<TaskPriority, { label: string; color: string }> = {
+  LOW: { label: 'Low', color: 'text-muted-foreground' },
+  MEDIUM: { label: 'Medium', color: 'text-secondary' },
+  HIGH: { label: 'High', color: 'text-destructive' },
+}
+
 export default function Dashboard() {
   const [statusFilter, setStatusFilter] = useState<string>('')
+  const [priorityFilter, setPriorityFilter] = useState<string>('')
   const [search, setSearch] = useState('')
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { toast } = useToast()
 
-  const { data: tasks, isLoading, error } = useTasks(statusFilter || undefined, search || undefined)
+  const { data: tasks, isLoading, error } = useTasks(
+    statusFilter || undefined,
+    priorityFilter || undefined,
+    search || undefined,
+  )
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
 
   const openCreate = () => {
     setEditingTask(null)
-    setIsDialogOpen(true)
-  }
-
-  const openEdit = (task: Task) => {
-    setEditingTask(task)
     setIsDialogOpen(true)
   }
 
@@ -109,14 +115,25 @@ export default function Dashboard() {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="All status" />
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value=" ">All</SelectItem>
             <SelectItem value="TODO">Todo</SelectItem>
             <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
             <SelectItem value="COMPLETED">Completed</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="Priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value=" ">All</SelectItem>
+            <SelectItem value="HIGH">High</SelectItem>
+            <SelectItem value="MEDIUM">Medium</SelectItem>
+            <SelectItem value="LOW">Low</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -152,26 +169,43 @@ export default function Dashboard() {
       {tasks && tasks.length > 0 && (
         <div className="space-y-2">
           {tasks.map((task) => {
-            const config = statusConfig[task.status]
-            const Icon = config.icon
+            const sConfig = statusConfig[task.status]
+            const pConfig = priorityConfig[task.priority]
+            const StatusIcon = sConfig.icon
+            const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
+
             return (
               <div
                 key={task.id}
                 className="group flex items-start gap-3 rounded-lg border bg-card p-4 transition-all hover:shadow-sm animate-fade-in"
               >
-                <Icon className={`mt-0.5 h-5 w-5 ${config.color} flex-shrink-0`} />
+                <StatusIcon className={`mt-0.5 h-5 w-5 ${sConfig.color} flex-shrink-0`} />
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-foreground truncate">
-                    {task.title}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium text-foreground truncate">
+                      {task.title}
+                    </h3>
+                    {isOverdue && (
+                      <AlertTriangle className="h-4 w-4 flex-shrink-0 text-destructive" title="Overdue" />
+                    )}
+                  </div>
                   {task.description && (
                     <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
                       {task.description}
                     </p>
                   )}
-                  <span className="mt-2 inline-block text-xs text-muted-foreground">
-                    {config.label}
-                  </span>
+                  <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>{sConfig.label}</span>
+                    <span className={`flex items-center gap-1 ${pConfig.color}`}>
+                      <Flag className="h-3 w-3" />
+                      {pConfig.label}
+                    </span>
+                    {task.dueDate && (
+                      <span className={isOverdue ? 'text-destructive font-medium' : ''}>
+                        Due: {new Date(task.dueDate).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
@@ -213,11 +247,19 @@ function TaskForm({
   const [title, setTitle] = useState(initial?.title || '')
   const [description, setDescription] = useState(initial?.description || '')
   const [status, setStatus] = useState<TaskStatus>(initial?.status || 'TODO')
+  const [priority, setPriority] = useState<TaskPriority>(initial?.priority || 'MEDIUM')
+  const [dueDate, setDueDate] = useState(initial?.dueDate || '')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim()) return
-    onSubmit({ title, description, status })
+    onSubmit({
+      title,
+      description: description || undefined,
+      status: status !== 'TODO' ? status : undefined,
+      priority: priority !== 'MEDIUM' ? priority : undefined,
+      dueDate: dueDate || undefined,
+    })
   }
 
   return (
@@ -243,18 +285,43 @@ function TaskForm({
         />
       </div>
 
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Status</label>
+          <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TODO">Todo</SelectItem>
+              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Priority</label>
+          <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="LOW">Low</SelectItem>
+              <SelectItem value="MEDIUM">Medium</SelectItem>
+              <SelectItem value="HIGH">High</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div className="space-y-2">
-        <label className="text-sm font-medium">Status</label>
-        <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="TODO">Todo</SelectItem>
-            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-            <SelectItem value="COMPLETED">Completed</SelectItem>
-          </SelectContent>
-        </Select>
+        <label className="text-sm font-medium">Due Date</label>
+        <Input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+        />
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading || !title.trim()}>

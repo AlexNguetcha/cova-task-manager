@@ -1,6 +1,7 @@
 package com.covataskmanager.config;
 
 import com.covataskmanager.entity.Task;
+import com.covataskmanager.entity.TaskPriority;
 import com.covataskmanager.entity.TaskStatus;
 import com.covataskmanager.entity.User;
 import com.covataskmanager.repository.TaskRepository;
@@ -47,36 +48,46 @@ public class DataInitializer implements CommandLineRunner {
                         .title("Finaliser contrat auto client Dupont")
                         .description("Vérifier les pièces justificatives, calculer la prime annuelle et éditer le contrat d'assurance auto pour M. Dupont.")
                         .status(TaskStatus.TODO)
+                        .priority(TaskPriority.HIGH)
+                        .dueDate(java.time.LocalDate.now().plusDays(3))
                         .user(user)
                         .build(),
                 Task.builder()
                         .title("Relancer sinistre habitation n°2024-0891")
                         .description("Contacter l'expert pour obtenir le rapport d'évaluation et relancer l'indemnisation du sinistre habitation.")
                         .status(TaskStatus.IN_PROGRESS)
+                        .priority(TaskPriority.HIGH)
+                        .dueDate(java.time.LocalDate.now().plusDays(1))
                         .user(user)
                         .build(),
                 Task.builder()
                         .title("Mettre à jour grille tarifaire santé")
                         .description("Intégrer les nouveaux barèmes 2025 pour les garanties santé individuelles et familiales.")
                         .status(TaskStatus.COMPLETED)
+                        .priority(TaskPriority.MEDIUM)
                         .user(user)
                         .build(),
                 Task.builder()
                         .title("Souscrire assurance vie client Martin")
                         .description("Préparer le dossier de souscription, vérifier le questionnaire médical et programmer le prélèvement.")
                         .status(TaskStatus.TODO)
+                        .priority(TaskPriority.MEDIUM)
+                        .dueDate(java.time.LocalDate.now().plusDays(7))
                         .user(user)
                         .build(),
                 Task.builder()
                         .title("Auditer portefeuille risques professionnels")
                         .description("Analyser les 50 plus gros contrats PRO, identifier les écarts de cotisation et proposer des avenants.")
                         .status(TaskStatus.IN_PROGRESS)
+                        .priority(TaskPriority.LOW)
+                        .dueDate(java.time.LocalDate.now().plusDays(14))
                         .user(user)
                         .build(),
                 Task.builder()
                         .title("Former équipe à la conformité RGPD")
                         .description("Organiser la session de formation obligatoire sur la protection des données personnelles pour les 12 conseillers.")
                         .status(TaskStatus.COMPLETED)
+                        .priority(TaskPriority.LOW)
                         .user(user)
                         .build()
         ));

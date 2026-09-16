@@ -16,16 +16,32 @@ export interface Task {
   title: string
   description: string | null
   status: 'TODO' | 'IN_PROGRESS' | 'COMPLETED'
+  priority: TaskPriority
+  dueDate: string | null
   createdAt: string
   updatedAt: string
 }
 
-export type TaskStatus = Task['status']
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'COMPLETED'
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH'
+
+export interface Task {
+  id: number
+  title: string
+  description: string | null
+  status: TaskStatus
+  priority: TaskPriority
+  dueDate: string | null
+  createdAt: string
+  updatedAt: string
+}
 
 export interface TaskFormData {
   title: string
   description?: string
   status?: TaskStatus
+  priority?: TaskPriority
+  dueDate?: string
 }
 
 export interface LoginFormData {

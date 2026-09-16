@@ -3,6 +3,7 @@ package com.covataskmanager;
 import com.covataskmanager.dto.TaskRequest;
 import com.covataskmanager.dto.TaskResponse;
 import com.covataskmanager.entity.Task;
+import com.covataskmanager.entity.TaskPriority;
 import com.covataskmanager.entity.TaskStatus;
 import com.covataskmanager.entity.User;
 import com.covataskmanager.repository.TaskRepository;
@@ -59,7 +60,7 @@ class TaskServiceTest {
         when(taskRepository.findByUserOrderByCreatedAtDesc(user))
                 .thenReturn(List.of(task));
 
-        var result = taskService.getUserTasks(user, null, null);
+        var result = taskService.getUserTasks(user, null, null, null);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getTitle()).isEqualTo("Test Task");
@@ -71,7 +72,7 @@ class TaskServiceTest {
         when(taskRepository.findByUserAndStatusOrderByCreatedAtDesc(user, TaskStatus.TODO))
                 .thenReturn(List.of(task));
 
-        var result = taskService.getUserTasks(user, "TODO", null);
+        var result = taskService.getUserTasks(user, "TODO", null, null);
 
         assertThat(result).hasSize(1);
         verify(taskRepository).findByUserAndStatusOrderByCreatedAtDesc(user, TaskStatus.TODO);
@@ -82,7 +83,7 @@ class TaskServiceTest {
         when(taskRepository.searchByUserAndTitle(user, "test"))
                 .thenReturn(List.of(task));
 
-        var result = taskService.getUserTasks(user, null, "test");
+        var result = taskService.getUserTasks(user, null, null, "test");
 
         assertThat(result).hasSize(1);
         verify(taskRepository).searchByUserAndTitle(user, "test");

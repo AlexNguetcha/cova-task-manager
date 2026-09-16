@@ -24,8 +24,9 @@ public class TaskController {
     public ResponseEntity<List<TaskResponse>> getTasks(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String priority,
             @RequestParam(required = false) String search) {
-        return ResponseEntity.ok(taskService.getUserTasks(user, status, search));
+        return ResponseEntity.ok(taskService.getUserTasks(user, status, search, priority));
     }
 
     @GetMapping("/{id}")

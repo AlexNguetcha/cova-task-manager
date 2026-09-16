@@ -3,6 +3,7 @@ package com.covataskmanager.service;
 import com.covataskmanager.dto.TaskRequest;
 import com.covataskmanager.dto.TaskResponse;
 import com.covataskmanager.entity.Task;
+import com.covataskmanager.entity.TaskPriority;
 import com.covataskmanager.entity.TaskStatus;
 import com.covataskmanager.entity.User;
 import com.covataskmanager.exception.ResourceNotFoundException;
@@ -19,14 +20,26 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
 
-    public List<TaskResponse> getUserTasks(User user, String status, String search) {
+    public List<TaskResponse> getUserTasks(User user, String status, String search, String priority) {
         List<Task> tasks;
 
-        if (search != null && !search.isBlank() && status != null && !status.isBlank()) {
-            tasks = taskRepository.searchByUserAndStatusAndTitle(user, TaskStatus.valueOf(status.toUpperCase()), search);
-        } else if (status != null && !status.isBlank()) {
+        boolean hasStatus = status != null && !status.isBlank();
+        boolean hasSearch = search != null && !search.isBlank();
+        boolean hasPriority = priority != null && !priority.isBlank();
+
+        if (hasStatus && hasSearch && hasPriority) {
+            tasks = taskRepository.findByUserAndStatusAndPriorityAndTitleContaining(user,
+                    TaskStatus.valueOf(status.toUpperCase()),
+                    TaskPriority.valueOf(priority.toUpperCase()), search);
+        } else if (hasStatus && hasPriority) {
+            tasks = taskRepository.findByUserAndStatusAndPriority(user,
+                    TaskStatus.valueOf(status.toUpperCase()),
+                    TaskPriority.valueOf(priority.toUpperCase()));
+        } else if (hasStatus) {
             tasks = taskRepository.findByUserAndStatusOrderByCreatedAtDesc(user, TaskStatus.valueOf(status.toUpperCase()));
-        } else if (search != null && !search.isBlank()) {
+        } else if (hasPriority) {
+            tasks = taskRepository.findByUserAndPriorityOrderByCreatedAtDesc(user, TaskPriority.valueOf(priority.toUpperCase()));
+        } else if (hasSearch) {
             tasks = taskRepository.searchByUserAndTitle(user, search);
         } else {
             tasks = taskRepository.findByUserOrderByCreatedAtDesc(user);
@@ -48,6 +61,10 @@ public class TaskService {
                 .status(request.getStatus() != null
                         ? TaskStatus.valueOf(request.getStatus().toUpperCase())
                         : TaskStatus.TODO)
+                .priority(request.getPriority() != null
+                        ? TaskPriority.valueOf(request.getPriority().toUpperCase())
+                        : TaskPriority.MEDIUM)
+                .dueDate(request.getDueDate())
                 .user(user)
                 .build();
 
@@ -63,6 +80,12 @@ public class TaskService {
         task.setDescription(request.getDescription());
         if (request.getStatus() != null) {
             task.setStatus(TaskStatus.valueOf(request.getStatus().toUpperCase()));
+        }
+        if (request.getPriority() != null) {
+            task.setPriority(TaskPriority.valueOf(request.getPriority().toUpperCase()));
+        }
+        if (request.getDueDate() != null) {
+            task.setDueDate(request.getDueDate());
         }
 
         task = taskRepository.save(task);
@@ -92,6 +115,8 @@ public class TaskService {
                 .title(task.getTitle())
                 .description(task.getDescription())
                 .status(task.getStatus())
+                .priority(task.getPriority())
+                .dueDate(task.getDueDate())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
                 .build();
