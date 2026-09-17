@@ -14,7 +14,11 @@ export function useTasks(status?: string, priority?: string, search?: string, pa
   return useQuery({
     queryKey: ['tasks', { status, priority, search, page }],
     queryFn: async () => {
-      const { data } = await api.get<PaginatedResponse<Task>>(`/tasks${qs ? `?${qs}` : ''}`)
+      const { data } = await api.get<Task[] | PaginatedResponse<Task>>(`/tasks${qs ? `?${qs}` : ''}`)
+      // Handle both paginated and plain array responses
+      if (Array.isArray(data)) {
+        return { content: data, totalPages: 1, totalElements: data.length, number: 0, size: data.length, first: true, last: true }
+      }
       return data
     },
   })
