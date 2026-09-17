@@ -186,7 +186,7 @@ export default function Dashboard() {
                       {task.title}
                     </h3>
                     {isOverdue && (
-                      <AlertTriangle className="h-4 w-4 flex-shrink-0 text-destructive" title="Overdue" />
+                      <AlertTriangle className="h-4 w-4 flex-shrink-0 text-destructive" />
                     )}
                   </div>
                   {task.description && (
