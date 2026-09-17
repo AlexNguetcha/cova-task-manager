@@ -8,7 +8,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tasks")
-@Data
+@Getter
+@Setter
+@ToString(exclude = "user")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

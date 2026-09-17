@@ -1,3 +1,5 @@
+package com.covataskmanager.repository;
+
 import com.covataskmanager.entity.Task;
 import com.covataskmanager.entity.TaskPriority;
 import com.covataskmanager.entity.TaskStatus;
