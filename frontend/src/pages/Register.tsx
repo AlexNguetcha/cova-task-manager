@@ -49,7 +49,7 @@ export default function Register() {
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Créer un compte</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Commencez avec Cova
+            Commencez avec Task Manager
           </p>
         </div>
 

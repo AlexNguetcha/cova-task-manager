@@ -48,7 +48,7 @@ export default function Login() {
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Bon retour</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Connectez-vous à votre espace Cova
+            Connectez-vous à votre espace Task Manager
           </p>
         </div>
 
