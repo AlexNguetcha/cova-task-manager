@@ -6,12 +6,11 @@ import com.covataskmanager.entity.User;
 import com.covataskmanager.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -21,12 +20,14 @@ public class TaskController {
     private final TaskService taskService;
 
     @GetMapping
-    public ResponseEntity<List<TaskResponse>> getTasks(
+    public ResponseEntity<Page<TaskResponse>> getTasks(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String priority,
-            @RequestParam(required = false) String search) {
-        return ResponseEntity.ok(taskService.getUserTasks(user, status, search, priority));
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(taskService.getUserTasks(user, status, search, priority, page, size));
     }
 
     @GetMapping("/{id}")

@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Search, Loader2, Trash2, Edit3, AlertTriangle, Flag } from 'lucide-react'
+import { Plus, Search, Trash2, Edit3, AlertTriangle, Flag, ChevronLeft, ChevronRight, Hash } from 'lucide-react'
 import type { Task, TaskStatus, TaskPriority, TaskFormData } from '@/types'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
+import { TaskSkeleton } from '@/components/Skeleton'
 
 const statusBadge: Record<TaskStatus, { label: string; bg: string; dot: string }> = {
   TODO: { label: 'À faire', bg: 'bg-muted text-muted-foreground', dot: 'bg-muted-foreground' },
@@ -25,15 +26,22 @@ export default function Dashboard() {
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [priorityFilter, setPriorityFilter] = useState<string>('')
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(0)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Task | null>(null)
   const { toast } = useToast()
 
-  const { data: tasks, isLoading, error } = useTasks(
+  const { data, isLoading, error } = useTasks(
     statusFilter || undefined,
     priorityFilter || undefined,
     search || undefined,
+    page,
   )
+  const tasks = data?.content
+  const totalPages = data?.totalPages ?? 0
+  const totalElements = data?.totalElements ?? 0
+  const pageStart = page * 10
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
@@ -48,34 +56,42 @@ export default function Dashboard() {
     setEditingTask(null)
   }
 
-  const handleCreate = async (data: TaskFormData) => {
+  const handleCreate = async (formData: TaskFormData) => {
     try {
-      await createTask.mutateAsync(data)
+      await createTask.mutateAsync(formData)
       closeDialog()
-      toast({ title: 'Tâche créée' })
+      setPage(0)
+      toast({ title: 'Tâche créée avec succès', description: formData.title })
     } catch {
       toast({ title: 'Échec de la création', variant: 'destructive' })
     }
   }
 
-  const handleUpdate = async (data: TaskFormData) => {
+  const handleUpdate = async (formData: TaskFormData) => {
     if (!editingTask) return
     try {
-      await updateTask.mutateAsync({ id: editingTask.id, ...data })
+      await updateTask.mutateAsync({ id: editingTask.id, ...formData })
       closeDialog()
-      toast({ title: 'Tâche modifiée' })
+      toast({ title: 'Tâche modifiée avec succès', description: formData.title })
     } catch {
       toast({ title: 'Échec de la modification', variant: 'destructive' })
     }
   }
 
-  const handleDelete = async (id: number) => {
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await deleteTask.mutateAsync(id)
-      toast({ title: 'Tâche supprimée' })
+      await deleteTask.mutateAsync(deleteTarget.id)
+      setDeleteTarget(null)
+      toast({ title: 'Tâche supprimée', description: deleteTarget.title })
     } catch {
       toast({ title: 'Échec de la suppression', variant: 'destructive' })
     }
+  }
+
+  const handleSearch = (value: string) => {
+    setSearch(value)
+    setPage(0)
   }
 
   return (
@@ -87,7 +103,7 @@ export default function Dashboard() {
             Mes tâches
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {tasks ? `${tasks.length} tâche${tasks.length > 1 ? 's' : ''}` : 'Gérez vos activités'}
+            {totalElements > 0 ? `${totalElements} tâche${totalElements > 1 ? 's' : ''}` : 'Gérez vos activités'}
           </p>
         </div>
         <Button onClick={openCreate} className="bg-primary hover:bg-primary-600 shadow-sm">
@@ -96,6 +112,37 @@ export default function Dashboard() {
         </Button>
       </div>
 
+      {/* ── Delete Confirmation Dialog ── */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Supprimer la tâche</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Êtes-vous sûr de vouloir supprimer cette tâche ?
+            </p>
+            {deleteTarget && (
+              <p className="text-sm font-medium text-foreground bg-muted rounded-lg px-3 py-2">
+                {deleteTarget.title}
+              </p>
+            )}
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDelete}
+                disabled={deleteTask.isPending}
+              >
+                {deleteTask.isPending ? 'Suppression...' : 'Supprimer'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Filters ── */}
       <div className="flex gap-3">
         <div className="relative flex-1">
@@ -103,7 +150,7 @@ export default function Dashboard() {
           <Input
             placeholder="Rechercher..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             className="pl-9 bg-card border-muted"
           />
         </div>
@@ -131,10 +178,12 @@ export default function Dashboard() {
         </Select>
       </div>
 
-      {/* ── Loading ── */}
+      {/* ── Loading / Skeleton ── */}
       {isLoading && (
-        <div className="flex justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <TaskSkeleton key={i} />
+          ))}
         </div>
       )}
 
@@ -145,9 +194,8 @@ export default function Dashboard() {
           <p className="mt-1 text-destructive/80">Impossible de récupérer vos tâches. Veuillez réessayer.</p>
         </div>
       )}
-
-      {/* ── Empty state ── */}
-      {tasks?.length === 0 && (
+{/* ── Empty state ── */}
+      {!isLoading && tasks?.length === 0 && (
         <div className="py-20 text-center">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10">
             <Flag className="h-7 w-7 text-primary" />
@@ -164,12 +212,13 @@ export default function Dashboard() {
       )}
 
       {/* ── Task list ── */}
-      {tasks && tasks.length > 0 && (
+      {!isLoading && tasks && tasks.length > 0 && (
         <div className="space-y-3">
-          {tasks.map((task) => {
+          {tasks.map((task, index) => {
             const badge = statusBadge[task.status]
             const barColor = priorityBar[task.priority]
             const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
+            const taskNumber = pageStart + index + 1
 
             return (
               <div
@@ -179,8 +228,14 @@ export default function Dashboard() {
                 {/* Priority bar */}
                 <div className={cn('absolute left-0 top-3 bottom-3 w-1 rounded-full', barColor)} />
 
+                {/* Task number badge */}
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50 text-xs font-semibold text-muted-foreground/60 flex-shrink-0 mt-0.5">
+                  <Hash className="h-3.5 w-3.5 mr-0.5" />
+                  {taskNumber}
+                </div>
+
                 {/* Content */}
-                <div className="flex-1 min-w-0 pl-3">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-start gap-2">
                     <h3 className={cn(
                       'font-semibold text-foreground truncate',
@@ -241,7 +296,7 @@ export default function Dashboard() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleDelete(task.id)}
+                    onClick={() => setDeleteTarget(task)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -249,6 +304,33 @@ export default function Dashboard() {
               </div>
             )
           })}
+
+          {/* ── Pagination ── */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-sm text-muted-foreground">
+                Page {page + 1} sur {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 0}
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage(p => p + 1)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

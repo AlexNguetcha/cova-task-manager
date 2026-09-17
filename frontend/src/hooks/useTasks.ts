@@ -1,18 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
-import type { Task, TaskFormData } from '@/types'
+import type { Task, TaskFormData, PaginatedResponse } from '@/types'
 
-export function useTasks(status?: string, priority?: string, search?: string) {
+export function useTasks(status?: string, priority?: string, search?: string, page = 0) {
   const params = new URLSearchParams()
   if (status) params.set('status', status)
   if (priority) params.set('priority', priority)
   if (search) params.set('search', search)
+  params.set('page', String(page))
+  params.set('size', '10')
   const qs = params.toString()
 
   return useQuery({
-    queryKey: ['tasks', { status, priority, search }],
+    queryKey: ['tasks', { status, priority, search, page }],
     queryFn: async () => {
-      const { data } = await api.get<Task[]>(`/tasks${qs ? `?${qs}` : ''}`)
+      const { data } = await api.get<PaginatedResponse<Task>>(`/tasks${qs ? `?${qs}` : ''}`)
       return data
     },
   })

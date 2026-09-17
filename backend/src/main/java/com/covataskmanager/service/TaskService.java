@@ -9,10 +9,10 @@ import com.covataskmanager.entity.User;
 import com.covataskmanager.exception.ResourceNotFoundException;
 import com.covataskmanager.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,8 +20,9 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
 
-    public List<TaskResponse> getUserTasks(User user, String status, String search, String priority) {
-        List<Task> tasks;
+    public Page<TaskResponse> getUserTasks(User user, String status, String search, String priority, int page, int size) {
+        var pageable = PageRequest.of(page, size);
+        Page<Task> tasks;
 
         boolean hasStatus = status != null && !status.isBlank();
         boolean hasSearch = search != null && !search.isBlank();
@@ -30,22 +31,22 @@ public class TaskService {
         if (hasStatus && hasSearch && hasPriority) {
             tasks = taskRepository.findByUserAndStatusAndPriorityAndTitleContaining(user,
                     TaskStatus.valueOf(status.toUpperCase()),
-                    TaskPriority.valueOf(priority.toUpperCase()), search);
+                    TaskPriority.valueOf(priority.toUpperCase()), search, pageable);
         } else if (hasStatus && hasPriority) {
             tasks = taskRepository.findByUserAndStatusAndPriority(user,
                     TaskStatus.valueOf(status.toUpperCase()),
-                    TaskPriority.valueOf(priority.toUpperCase()));
+                    TaskPriority.valueOf(priority.toUpperCase()), pageable);
         } else if (hasStatus) {
-            tasks = taskRepository.findByUserAndStatusOrderByCreatedAtDesc(user, TaskStatus.valueOf(status.toUpperCase()));
+            tasks = taskRepository.findByUserAndStatusOrderByCreatedAtDesc(user, TaskStatus.valueOf(status.toUpperCase()), pageable);
         } else if (hasPriority) {
-            tasks = taskRepository.findByUserAndPriorityOrderByCreatedAtDesc(user, TaskPriority.valueOf(priority.toUpperCase()));
+            tasks = taskRepository.findByUserAndPriorityOrderByCreatedAtDesc(user, TaskPriority.valueOf(priority.toUpperCase()), pageable);
         } else if (hasSearch) {
-            tasks = taskRepository.searchByUserAndTitle(user, search);
+            tasks = taskRepository.searchByUserAndTitle(user, search, pageable);
         } else {
-            tasks = taskRepository.findByUserOrderByCreatedAtDesc(user);
+            tasks = taskRepository.findByUserOrderByCreatedAtDesc(user, pageable);
         }
 
-        return tasks.stream().map(this::toResponse).toList();
+        return tasks.map(this::toResponse);
     }
 
     public TaskResponse getTaskById(User user, Long id) {

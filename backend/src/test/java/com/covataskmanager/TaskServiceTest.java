@@ -13,6 +13,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -57,36 +60,39 @@ class TaskServiceTest {
 
     @Test
     void shouldGetAllUserTasks() {
-        when(taskRepository.findByUserOrderByCreatedAtDesc(user))
-                .thenReturn(List.of(task));
+        var page = new PageImpl<>(List.of(task));
+        when(taskRepository.findByUserOrderByCreatedAtDesc(user, PageRequest.of(0, 10)))
+                .thenReturn(page);
 
-        var result = taskService.getUserTasks(user, null, null, null);
+        var result = taskService.getUserTasks(user, null, null, null, 0, 10);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getTitle()).isEqualTo("Test Task");
-        verify(taskRepository).findByUserOrderByCreatedAtDesc(user);
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getTitle()).isEqualTo("Test Task");
+        verify(taskRepository).findByUserOrderByCreatedAtDesc(user, PageRequest.of(0, 10));
     }
 
     @Test
     void shouldFilterTasksByStatus() {
-        when(taskRepository.findByUserAndStatusOrderByCreatedAtDesc(user, TaskStatus.TODO))
-                .thenReturn(List.of(task));
+        var page = new PageImpl<>(List.of(task));
+        when(taskRepository.findByUserAndStatusOrderByCreatedAtDesc(user, TaskStatus.TODO, PageRequest.of(0, 10)))
+                .thenReturn(page);
 
-        var result = taskService.getUserTasks(user, "TODO", null, null);
+        var result = taskService.getUserTasks(user, "TODO", null, null, 0, 10);
 
-        assertThat(result).hasSize(1);
-        verify(taskRepository).findByUserAndStatusOrderByCreatedAtDesc(user, TaskStatus.TODO);
+        assertThat(result.getContent()).hasSize(1);
+        verify(taskRepository).findByUserAndStatusOrderByCreatedAtDesc(user, TaskStatus.TODO, PageRequest.of(0, 10));
     }
 
     @Test
     void shouldSearchTasksByTitle() {
-        when(taskRepository.searchByUserAndTitle(user, "test"))
-                .thenReturn(List.of(task));
+        var page = new PageImpl<>(List.of(task));
+        when(taskRepository.searchByUserAndTitle(user, "test", PageRequest.of(0, 10)))
+                .thenReturn(page);
 
-        var result = taskService.getUserTasks(user, null, null, "test");
+        var result = taskService.getUserTasks(user, null, null, "test", 0, 10);
 
-        assertThat(result).hasSize(1);
-        verify(taskRepository).searchByUserAndTitle(user, "test");
+        assertThat(result.getContent()).hasSize(1);
+        verify(taskRepository).searchByUserAndTitle(user, "test", PageRequest.of(0, 10));
     }
 
     @Test
