@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Search, Trash2, Edit3, AlertTriangle, Flag, ChevronLeft, ChevronRight, Hash } from 'lucide-react'
+import { Plus, Search, Trash2, Edit3, Eye, AlertTriangle, Flag, ChevronLeft, ChevronRight, Hash, LayoutList, LayoutGrid } from 'lucide-react'
 import type { Task, TaskStatus, TaskPriority, TaskFormData } from '@/types'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/contexts/ToastContext'
 import { cn } from '@/lib/utils'
 import { TaskSkeleton } from '@/components/Skeleton'
 
@@ -28,8 +28,11 @@ export default function Dashboard() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [viewTask, setViewTask] = useState<Task | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null)
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const { toast } = useToast()
 
   const { data, isLoading, error } = useTasks(
@@ -97,7 +100,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Mes tâches
@@ -106,10 +109,32 @@ export default function Dashboard() {
             {totalElements > 0 ? `${totalElements} tâche${totalElements > 1 ? 's' : ''}` : 'Gérez vos activités'}
           </p>
         </div>
-        <Button onClick={openCreate} className="bg-primary hover:bg-primary-600 shadow-sm">
-          <Plus className="mr-2 h-4 w-4" />
-          Nouvelle tâche
-        </Button>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {/* View mode toggle — desktop only */}
+          <div className="hidden sm:flex border border-muted rounded-lg p-0.5 bg-card">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-8 w-8 ${viewMode === 'list' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}
+              onClick={() => setViewMode('list')}
+            >
+              <LayoutList className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-8 w-8 ${viewMode === 'grid' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}
+              onClick={() => setViewMode('grid')}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button onClick={openCreate} className="bg-primary hover:bg-primary-600 shadow-sm">
+            <Plus className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Nouvelle tâche</span>
+            <span className="sm:hidden">Créer</span>
+          </Button>
+        </div>
       </div>
 
       {/* ── Delete Confirmation Dialog ── */}
@@ -143,8 +168,77 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
+      {/* ── Create / Edit Dialog ── */}
+      <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingTask ? 'Modifier la tâche' : 'Nouvelle tâche'}</DialogTitle>
+          </DialogHeader>
+          <TaskForm
+            initial={editingTask}
+            onSubmit={editingTask ? handleUpdate : handleCreate}
+            isLoading={createTask.isPending || updateTask.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* ── View Details Dialog ── */}
+      <Dialog open={!!viewTask} onOpenChange={(open) => { if (!open) setViewTask(null) }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{viewTask?.title}</DialogTitle>
+          </DialogHeader>
+          {viewTask && (
+            <div className="space-y-5">
+              {viewTask.description ? (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Description</p>
+                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{viewTask.description}</p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">Aucune description</p>
+              )}
+
+              <div className="flex flex-wrap gap-x-6 gap-y-3">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Statut</p>
+                  <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium', statusBadge[viewTask.status].bg)}>
+                    <span className={cn('h-1.5 w-1.5 rounded-full', statusBadge[viewTask.status].dot)} />
+                    {statusBadge[viewTask.status].label}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Priorité</p>
+                  <span className="inline-flex items-center gap-1 text-sm text-foreground">
+                    <Flag className="h-3.5 w-3.5" />
+                    {viewTask.priority === 'HIGH' ? 'Haute' : viewTask.priority === 'MEDIUM' ? 'Moyenne' : 'Basse'}
+                  </span>
+                </div>
+                {viewTask.dueDate && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Échéance</p>
+                    <p className="text-sm text-foreground">
+                      {new Date(viewTask.dueDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-x-6 gap-y-3 text-xs text-muted-foreground pt-3 border-t border-muted">
+                <div>
+                  <span className="font-medium">Créée</span> : {new Date(viewTask.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </div>
+                <div>
+                  <span className="font-medium">Modifiée</span> : {new Date(viewTask.updatedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* ── Filters ── */}
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -154,28 +248,30 @@ export default function Dashboard() {
             className="pl-9 bg-card border-muted"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-36 bg-card border-muted">
-            <SelectValue placeholder="Statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value=" ">Tous</SelectItem>
-            <SelectItem value="TODO">À faire</SelectItem>
-            <SelectItem value="IN_PROGRESS">En cours</SelectItem>
-            <SelectItem value="COMPLETED">Terminé</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-36 bg-card border-muted">
-            <SelectValue placeholder="Priorité" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value=" ">Toutes</SelectItem>
-            <SelectItem value="HIGH">Haute</SelectItem>
-            <SelectItem value="MEDIUM">Moyenne</SelectItem>
-            <SelectItem value="LOW">Basse</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-3">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="flex-1 sm:w-36 bg-card border-muted">
+              <SelectValue placeholder="Statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value=" ">Tous</SelectItem>
+              <SelectItem value="TODO">À faire</SelectItem>
+              <SelectItem value="IN_PROGRESS">En cours</SelectItem>
+              <SelectItem value="COMPLETED">Terminé</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="flex-1 sm:w-36 bg-card border-muted">
+              <SelectValue placeholder="Priorité" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value=" ">Toutes</SelectItem>
+              <SelectItem value="HIGH">Haute</SelectItem>
+              <SelectItem value="MEDIUM">Moyenne</SelectItem>
+              <SelectItem value="LOW">Basse</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* ── Loading / Skeleton ── */}
@@ -211,9 +307,9 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Task list ── */}
+      {/* ── Task list / grid ── */}
       {!isLoading && tasks && tasks.length > 0 && (
-        <div className="space-y-3">
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : 'space-y-3'}>
           {tasks.map((task, index) => {
             const badge = statusBadge[task.status]
             const barColor = priorityBar[task.priority]
@@ -223,83 +319,101 @@ export default function Dashboard() {
             return (
               <div
                 key={task.id}
-                className="group relative flex items-start gap-4 rounded-xl border border-muted bg-card p-5 transition-all hover:border-primary/20 hover:shadow-md hover:shadow-primary/5 animate-fade-in"
+                className="group relative rounded-xl border border-muted bg-card p-4 sm:p-5 transition-all hover:border-primary/20 hover:shadow-md hover:shadow-primary/5 animate-fade-in cursor-pointer"
+                onClick={() => setViewTask(task)}
               >
                 {/* Priority bar */}
                 <div className={cn('absolute left-0 top-3 bottom-3 w-1 rounded-full', barColor)} />
 
-                {/* Task number badge */}
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50 text-xs font-semibold text-muted-foreground/60 flex-shrink-0 mt-0.5">
-                  <Hash className="h-3.5 w-3.5 mr-0.5" />
-                  {taskNumber}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-2">
-                    <h3 className={cn(
-                      'font-semibold text-foreground truncate',
-                      task.status === 'COMPLETED' && 'line-through text-muted-foreground',
-                    )}>
-                      {task.title}
-                    </h3>
-                    {isOverdue && (
-                      <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
-                    )}
-                  </div>
-
-                  {task.description && (
-                    <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                      {task.description}
-                    </p>
-                  )}
-
-                  <div className="mt-3 flex flex-wrap items-center gap-3">
-                    {/* Status badge */}
-                    <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium', badge.bg)}>
-                      <span className={cn('h-1.5 w-1.5 rounded-full', badge.dot)} />
-                      {badge.label}
-                    </span>
-
-                    {/* Priority */}
-                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                      <Flag className="h-3 w-3" />
-                      {task.priority === 'HIGH' ? 'Haute' : task.priority === 'MEDIUM' ? 'Moyenne' : 'Basse'}
-                    </span>
-
-                    {/* Due date */}
-                    {task.dueDate && (
-                      <span className={cn(
-                        'text-xs',
-                        isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground',
+                {/* Top row: content + actions */}
+                <div className="flex items-start gap-3">
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-2">
+                      <h3 className={cn(
+                        'font-semibold text-foreground',
+                        task.status === 'COMPLETED' && 'line-through text-muted-foreground',
                       )}>
-                        {isOverdue ? 'En retard' : 'Échéance'} : {new Date(task.dueDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                      </span>
+                        {task.title}
+                      </h3>
+                      {isOverdue && (
+                        <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
+                      )}
+                    </div>
+
+                    {task.description && (
+                      <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed break-words line-clamp-2">
+                        {task.description}
+                      </p>
                     )}
+                  </div>
+
+                  {/* Actions (desktop: on hover, mobile: always visible) */}
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity max-sm:opacity-100 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      title="Voir les détails"
+                      onClick={() => {
+                        setViewTask(task)
+                      }}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      title="Modifier"
+                      onClick={() => {
+                        setEditingTask(task)
+                        setIsDialogOpen(true)
+                      }}
+                    >
+                      <Edit3 className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      title="Supprimer"
+                      onClick={() => setDeleteTarget(task)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    onClick={() => {
-                      setEditingTask(task)
-                      setIsDialogOpen(true)
-                    }}
-                  >
-                    <Edit3 className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => setDeleteTarget(task)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                {/* Bottom row: metadata */}
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                  {/* Task number badge */}
+                  <span className="inline-flex items-center gap-1 rounded-md bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground/60">
+                    <Hash className="h-3 w-3" />
+                    {taskNumber}
+                  </span>
+
+                  {/* Status badge */}
+                  <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium', badge.bg)}>
+                    <span className={cn('h-1.5 w-1.5 rounded-full', badge.dot)} />
+                    {badge.label}
+                  </span>
+
+                  {/* Priority */}
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    <Flag className="h-3 w-3" />
+                    {task.priority === 'HIGH' ? 'Haute' : task.priority === 'MEDIUM' ? 'Moyenne' : 'Basse'}
+                  </span>
+
+                  {/* Due date */}
+                  {task.dueDate && (
+                    <span className={cn(
+                      'text-xs',
+                      isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground',
+                    )}>
+                      {isOverdue ? 'En retard' : 'Échéance'} : {new Date(task.dueDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    </span>
+                  )}
                 </div>
               </div>
             )
@@ -307,7 +421,7 @@ export default function Dashboard() {
 
           {/* ── Pagination ── */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
               <p className="text-sm text-muted-foreground">
                 Page {page + 1} sur {totalPages}
               </p>
@@ -318,7 +432,8 @@ export default function Dashboard() {
                   disabled={page === 0}
                   onClick={() => setPage(p => Math.max(0, p - 1))}
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  <span className="hidden sm:inline">Précédent</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -326,7 +441,8 @@ export default function Dashboard() {
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage(p => p + 1)}
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <span className="hidden sm:inline">Suivant</span>
+                  <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
             </div>

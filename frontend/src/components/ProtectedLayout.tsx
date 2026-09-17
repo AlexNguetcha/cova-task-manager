@@ -22,13 +22,13 @@ export function ProtectedLayout() {
             <span className="text-lg font-bold tracking-tight text-primary">Task Manager</span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-muted-foreground">
+          <div className="flex items-center gap-1 sm:gap-3">
+            <span className="text-sm font-medium text-muted-foreground hidden sm:block">
               {user?.name}
             </span>
             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={logout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Déconnexion
+              <LogOut className="mr-0 sm:mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Déconnexion</span>
             </Button>
           </div>
         </div>

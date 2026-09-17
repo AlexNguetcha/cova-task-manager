@@ -20,9 +20,11 @@ build: ## Build all Docker images
 
 up: ## Start all services (detached)
 	docker compose up -d
-	@echo "✅ Frontend: http://localhost"
-	@echo "✅ Backend:  http://localhost:8080"
-	@echo "✅ Swagger:  http://localhost:8080/swagger-ui.html"
+	@echo "✅ Backend:  http://localhost:8082"
+	@echo "✅ Swagger:  http://localhost:8082/swagger-ui.html"
+	@echo "✅ MySQL:    localhost:3307"
+	@echo ""
+	@echo "⚠️  Frontend: run 'make dev-frontend' for hot reload"
 
 down: ## Stop all services
 	docker compose down
@@ -61,8 +63,8 @@ shell-backend: ## Open a shell in the backend container
 build-frontend: ## Build frontend for production
 	cd frontend && npm run build
 
-dev-frontend: ## Run frontend in dev mode
-	cd frontend && npm run dev
+dev-frontend: ## Run frontend with hot reload (Vite) — http://localhost:5173
+	cd frontend && npx vite
 
 lint-frontend: ## Lint frontend code
 	cd frontend && npm run lint

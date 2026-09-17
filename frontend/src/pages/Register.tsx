@@ -67,7 +67,7 @@ export default function Register() {
       </div>
 
       {/* ── Right Panel ── */}
-      <div className="flex-1 flex items-center justify-center px-6 bg-gradient-to-br from-primary/[0.02] via-background to-secondary/[0.02]">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 bg-gradient-to-br from-primary/[0.02] via-background to-secondary/[0.02]">
         <div className="w-full max-w-md animate-fade-in">
           {/* Mobile logo */}
           <div className="lg:hidden mb-10 text-center">
@@ -89,7 +89,7 @@ export default function Register() {
           </div>
 
           {/* Card */}
-          <div className="rounded-2xl border border-muted/60 bg-card p-8 shadow-sm shadow-primary/5">
+          <div className="rounded-2xl border border-muted/60 bg-card p-6 sm:p-8 shadow-sm shadow-primary/5">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <div className="space-y-1.5">
                 <Label htmlFor="name" className="text-sm font-medium">Nom</Label>
