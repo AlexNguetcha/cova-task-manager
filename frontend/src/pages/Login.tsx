@@ -133,11 +133,6 @@ export default function Login() {
               </p>
             </div>
           </div>
-
-          {/* Demo hint */}
-          <p className="mt-6 text-center text-xs text-muted-foreground/60">
-            Démo : demo@cova.africa / demo1234
-          </p>
         </div>
       </div>
     </div>

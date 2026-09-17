@@ -1,0 +1,101 @@
+import { useState } from 'react'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
+import type { Task, TaskStatus, TaskPriority, TaskFormData } from '@/types'
+
+interface TaskFormProps {
+  onSubmit: (data: TaskFormData) => void
+  isLoading?: boolean
+  initial?: Task | null
+}
+
+export function TaskForm({ onSubmit, isLoading, initial }: TaskFormProps) {
+  const [title, setTitle] = useState(initial?.title || '')
+  const [description, setDescription] = useState(initial?.description || '')
+  const [status, setStatus] = useState<TaskStatus>(initial?.status || 'TODO')
+  const [priority, setPriority] = useState<TaskPriority>(initial?.priority || 'MEDIUM')
+  const [dueDate, setDueDate] = useState(initial?.dueDate || '')
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!title.trim()) return
+    onSubmit({
+      title,
+      description: description || undefined,
+      status: status !== 'TODO' ? status : undefined,
+      priority: priority !== 'MEDIUM' ? priority : undefined,
+      dueDate: dueDate || undefined,
+    })
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-foreground">Titre</label>
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Que devez-vous faire ?"
+          autoFocus
+          className="border-muted focus:border-secondary"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-foreground">Description</label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Ajoutez des détails..."
+          rows={3}
+          className="flex w-full rounded-xl border border-muted bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-foreground">Statut</label>
+          <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
+            <SelectTrigger className="border-muted">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TODO">À faire</SelectItem>
+              <SelectItem value="IN_PROGRESS">En cours</SelectItem>
+              <SelectItem value="COMPLETED">Terminé</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-foreground">Priorité</label>
+          <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
+            <SelectTrigger className="border-muted">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="LOW">Basse</SelectItem>
+              <SelectItem value="MEDIUM">Moyenne</SelectItem>
+              <SelectItem value="HIGH">Haute</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-foreground">Date d'échéance</label>
+        <Input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          className="border-muted focus:border-secondary"
+        />
+      </div>
+
+      <Button type="submit" className="w-full bg-primary hover:bg-primary-600 shadow-sm" disabled={isLoading || !title.trim()}>
+        {isLoading ? 'Enregistrement...' : initial ? 'Modifier la tâche' : 'Créer la tâche'}
+      </Button>
+    </form>
+  )
+}

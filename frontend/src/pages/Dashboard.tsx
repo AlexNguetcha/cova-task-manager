@@ -1,36 +1,25 @@
 import { useState } from 'react'
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/hooks/useTasks'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Search, Trash2, Edit3, Eye, AlertTriangle, Flag, ChevronLeft, ChevronRight, Hash, LayoutList, LayoutGrid } from 'lucide-react'
-import type { Task, TaskStatus, TaskPriority, TaskFormData } from '@/types'
+import { Plus, LayoutList, LayoutGrid, Flag } from 'lucide-react'
+import type { Task, TaskFormData } from '@/types'
 import { useToast } from '@/contexts/ToastContext'
-import { cn } from '@/lib/utils'
 import { TaskSkeleton } from '@/components/Skeleton'
-
-const statusBadge: Record<TaskStatus, { label: string; bg: string; dot: string }> = {
-  TODO: { label: 'À faire', bg: 'bg-muted text-muted-foreground', dot: 'bg-muted-foreground' },
-  IN_PROGRESS: { label: 'En cours', bg: 'bg-secondary/10 text-secondary', dot: 'bg-secondary' },
-  COMPLETED: { label: 'Terminé', bg: 'bg-primary/10 text-primary', dot: 'bg-primary' },
-}
-
-const priorityBar: Record<TaskPriority, string> = {
-  LOW: 'bg-muted-foreground/30',
-  MEDIUM: 'bg-secondary',
-  HIGH: 'bg-destructive',
-}
+import { TaskCard } from '@/components/TaskCard'
+import { TaskFilters } from '@/components/TaskFilters'
+import { ViewTaskDialog, DeleteTaskDialog } from '@/components/TaskDialogs'
+import { TaskPagination } from '@/components/TaskPagination'
+import { TaskForm } from '@/components/TaskForm'
 
 export default function Dashboard() {
-  const [statusFilter, setStatusFilter] = useState<string>('')
-  const [priorityFilter, setPriorityFilter] = useState<string>('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState('')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [viewTask, setViewTask] = useState<Task | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const { toast } = useToast()
@@ -49,21 +38,13 @@ export default function Dashboard() {
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
 
-  const openCreate = () => {
-    setEditingTask(null)
-    setIsDialogOpen(true)
-  }
-
-  const closeDialog = () => {
-    setIsDialogOpen(false)
-    setEditingTask(null)
-  }
+  const openCreate = () => { setEditingTask(null); setIsDialogOpen(true) }
+  const closeDialog = () => { setIsDialogOpen(false); setEditingTask(null) }
 
   const handleCreate = async (formData: TaskFormData) => {
     try {
       await createTask.mutateAsync(formData)
-      closeDialog()
-      setPage(0)
+      closeDialog(); setPage(0)
       toast({ title: 'Tâche créée avec succès', description: formData.title })
     } catch {
       toast({ title: 'Échec de la création', variant: 'destructive' })
@@ -81,7 +62,7 @@ export default function Dashboard() {
     }
   }
 
-  const confirmDelete = async () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return
     try {
       await deleteTask.mutateAsync(deleteTarget.id)
@@ -92,42 +73,28 @@ export default function Dashboard() {
     }
   }
 
-  const handleSearch = (value: string) => {
-    setSearch(value)
-    setPage(0)
-  }
+  const handleSearch = (v: string) => { setSearch(v); setPage(0) }
 
   return (
     <div className="space-y-8">
       {/* ── Header ── */}
       <div className="flex items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Mes tâches
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Mes tâches</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {totalElements > 0 ? `${totalElements} tâche${totalElements > 1 ? 's' : ''}` : 'Gérez vos activités'}
           </p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
-          {/* View mode toggle — desktop only */}
           <div className="hidden sm:flex border border-muted rounded-lg p-0.5 bg-card">
-            <Button
-              variant="ghost"
-              size="icon"
+            <Button variant="ghost" size="icon"
               className={`h-8 w-8 ${viewMode === 'list' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}
               onClick={() => setViewMode('list')}
-            >
-              <LayoutList className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
+            ><LayoutList className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon"
               className={`h-8 w-8 ${viewMode === 'grid' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}
               onClick={() => setViewMode('grid')}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
+            ><LayoutGrid className="h-4 w-4" /></Button>
           </div>
           <Button onClick={openCreate} className="bg-primary hover:bg-primary-600 shadow-sm">
             <Plus className="mr-2 h-4 w-4" />
@@ -137,38 +104,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Delete Confirmation Dialog ── */}
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Supprimer la tâche</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Êtes-vous sûr de vouloir supprimer cette tâche ?
-            </p>
-            {deleteTarget && (
-              <p className="text-sm font-medium text-foreground bg-muted rounded-lg px-3 py-2">
-                {deleteTarget.title}
-              </p>
-            )}
-            <div className="flex gap-3 justify-end">
-              <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-                Annuler
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={confirmDelete}
-                disabled={deleteTask.isPending}
-              >
-                {deleteTask.isPending ? 'Suppression...' : 'Supprimer'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* ── Dialogs ── */}
+      <DeleteTaskDialog task={deleteTarget} isPending={deleteTask.isPending} onConfirm={handleDelete} onClose={() => setDeleteTarget(null)} />
+      <ViewTaskDialog task={viewTask} onClose={() => setViewTask(null)} />
 
-      {/* ── Create / Edit Dialog ── */}
       <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -182,104 +121,20 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* ── View Details Dialog ── */}
-      <Dialog open={!!viewTask} onOpenChange={(open) => { if (!open) setViewTask(null) }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{viewTask?.title}</DialogTitle>
-          </DialogHeader>
-          {viewTask && (
-            <div className="space-y-5">
-              {viewTask.description ? (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Description</p>
-                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{viewTask.description}</p>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground italic">Aucune description</p>
-              )}
-
-              <div className="flex flex-wrap gap-x-6 gap-y-3">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Statut</p>
-                  <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium', statusBadge[viewTask.status].bg)}>
-                    <span className={cn('h-1.5 w-1.5 rounded-full', statusBadge[viewTask.status].dot)} />
-                    {statusBadge[viewTask.status].label}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Priorité</p>
-                  <span className="inline-flex items-center gap-1 text-sm text-foreground">
-                    <Flag className="h-3.5 w-3.5" />
-                    {viewTask.priority === 'HIGH' ? 'Haute' : viewTask.priority === 'MEDIUM' ? 'Moyenne' : 'Basse'}
-                  </span>
-                </div>
-                {viewTask.dueDate && (
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Échéance</p>
-                    <p className="text-sm text-foreground">
-                      {new Date(viewTask.dueDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-wrap gap-x-6 gap-y-3 text-xs text-muted-foreground pt-3 border-t border-muted">
-                <div>
-                  <span className="font-medium">Créée</span> : {new Date(viewTask.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                </div>
-                <div>
-                  <span className="font-medium">Modifiée</span> : {new Date(viewTask.updatedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
       {/* ── Filters ── */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher..."
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-9 bg-card border-muted"
-          />
-        </div>
-        <div className="flex gap-3">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="flex-1 sm:w-36 bg-card border-muted">
-              <SelectValue placeholder="Statut" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value=" ">Tous</SelectItem>
-              <SelectItem value="TODO">À faire</SelectItem>
-              <SelectItem value="IN_PROGRESS">En cours</SelectItem>
-              <SelectItem value="COMPLETED">Terminé</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-            <SelectTrigger className="flex-1 sm:w-36 bg-card border-muted">
-              <SelectValue placeholder="Priorité" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value=" ">Toutes</SelectItem>
-              <SelectItem value="HIGH">Haute</SelectItem>
-              <SelectItem value="MEDIUM">Moyenne</SelectItem>
-              <SelectItem value="LOW">Basse</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <TaskFilters
+        search={search}
+        statusFilter={statusFilter}
+        priorityFilter={priorityFilter}
+        onSearchChange={handleSearch}
+        onStatusChange={(v) => { setStatusFilter(v); setPage(0) }}
+        onPriorityChange={(v) => { setPriorityFilter(v); setPage(0) }}
+      />
 
-      {/* ── Loading / Skeleton ── */}
+      {/* ── Loading ── */}
       {isLoading && (
         <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <TaskSkeleton key={i} />
-          ))}
+          {Array.from({ length: 4 }).map((_, i) => <TaskSkeleton key={i} />)}
         </div>
       )}
 
@@ -290,7 +145,8 @@ export default function Dashboard() {
           <p className="mt-1 text-destructive/80">Impossible de récupérer vos tâches. Veuillez réessayer.</p>
         </div>
       )}
-{/* ── Empty state ── */}
+
+      {/* ── Empty state ── */}
       {!isLoading && tasks?.length === 0 && (
         <div className="py-20 text-center">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10">
@@ -301,8 +157,7 @@ export default function Dashboard() {
             Créez votre première tâche et organisez votre travail en toute simplicité.
           </p>
           <Button onClick={openCreate} className="mt-6 bg-primary hover:bg-primary-600 shadow-sm">
-            <Plus className="mr-2 h-4 w-4" />
-            Créer une tâche
+            <Plus className="mr-2 h-4 w-4" /> Créer une tâche
           </Button>
         </div>
       )}
@@ -310,243 +165,19 @@ export default function Dashboard() {
       {/* ── Task list / grid ── */}
       {!isLoading && tasks && tasks.length > 0 && (
         <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : 'space-y-3'}>
-          {tasks.map((task, index) => {
-            const badge = statusBadge[task.status]
-            const barColor = priorityBar[task.priority]
-            const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
-            const taskNumber = pageStart + index + 1
-
-            return (
-              <div
-                key={task.id}
-                className="group relative rounded-xl border border-muted bg-card p-4 sm:p-5 transition-all hover:border-primary/20 hover:shadow-md hover:shadow-primary/5 animate-fade-in cursor-pointer"
-                onClick={() => setViewTask(task)}
-              >
-                {/* Priority bar */}
-                <div className={cn('absolute left-0 top-3 bottom-3 w-1 rounded-full', barColor)} />
-
-                {/* Top row: content + actions */}
-                <div className="flex items-start gap-3">
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start gap-2">
-                      <h3 className={cn(
-                        'font-semibold text-foreground',
-                        task.status === 'COMPLETED' && 'line-through text-muted-foreground',
-                      )}>
-                        {task.title}
-                      </h3>
-                      {isOverdue && (
-                        <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
-                      )}
-                    </div>
-
-                    {task.description && (
-                      <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed break-words line-clamp-2">
-                        {task.description}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Actions (desktop: on hover, mobile: always visible) */}
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity max-sm:opacity-100 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      title="Voir les détails"
-                      onClick={() => {
-                        setViewTask(task)
-                      }}
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      title="Modifier"
-                      onClick={() => {
-                        setEditingTask(task)
-                        setIsDialogOpen(true)
-                      }}
-                    >
-                      <Edit3 className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      title="Supprimer"
-                      onClick={() => setDeleteTarget(task)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Bottom row: metadata */}
-                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                  {/* Task number badge */}
-                  <span className="inline-flex items-center gap-1 rounded-md bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground/60">
-                    <Hash className="h-3 w-3" />
-                    {taskNumber}
-                  </span>
-
-                  {/* Status badge */}
-                  <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium', badge.bg)}>
-                    <span className={cn('h-1.5 w-1.5 rounded-full', badge.dot)} />
-                    {badge.label}
-                  </span>
-
-                  {/* Priority */}
-                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                    <Flag className="h-3 w-3" />
-                    {task.priority === 'HIGH' ? 'Haute' : task.priority === 'MEDIUM' ? 'Moyenne' : 'Basse'}
-                  </span>
-
-                  {/* Due date */}
-                  {task.dueDate && (
-                    <span className={cn(
-                      'text-xs',
-                      isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground',
-                    )}>
-                      {isOverdue ? 'En retard' : 'Échéance'} : {new Date(task.dueDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-
-          {/* ── Pagination ── */}
-          {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-              <p className="text-sm text-muted-foreground">
-                Page {page + 1} sur {totalPages}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 0}
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  <span className="hidden sm:inline">Précédent</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= totalPages - 1}
-                  onClick={() => setPage(p => p + 1)}
-                >
-                  <span className="hidden sm:inline">Suivant</span>
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
-          )}
+          {tasks.map((task, index) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              taskNumber={pageStart + index + 1}
+              onView={setViewTask}
+              onEdit={(t) => { setEditingTask(t); setIsDialogOpen(true) }}
+              onDelete={setDeleteTarget}
+            />
+          ))}
+          <TaskPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       )}
     </div>
-  )
-}
-
-function TaskForm({
-  onSubmit,
-  isLoading,
-  initial,
-}: {
-  onSubmit: (data: TaskFormData) => void
-  isLoading?: boolean
-  initial?: Task | null
-}) {
-  const [title, setTitle] = useState(initial?.title || '')
-  const [description, setDescription] = useState(initial?.description || '')
-  const [status, setStatus] = useState<TaskStatus>(initial?.status || 'TODO')
-  const [priority, setPriority] = useState<TaskPriority>(initial?.priority || 'MEDIUM')
-  const [dueDate, setDueDate] = useState(initial?.dueDate || '')
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!title.trim()) return
-    onSubmit({
-      title,
-      description: description || undefined,
-      status: status !== 'TODO' ? status : undefined,
-      priority: priority !== 'MEDIUM' ? priority : undefined,
-      dueDate: dueDate || undefined,
-    })
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-foreground">Titre</label>
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Que devez-vous faire ?"
-          autoFocus
-          className="border-muted focus:border-secondary"
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-foreground">Description</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Ajoutez des détails..."
-          rows={3}
-          className="flex w-full rounded-xl border border-muted bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-foreground">Statut</label>
-          <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
-            <SelectTrigger className="border-muted">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="TODO">À faire</SelectItem>
-              <SelectItem value="IN_PROGRESS">En cours</SelectItem>
-              <SelectItem value="COMPLETED">Terminé</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-foreground">Priorité</label>
-          <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
-            <SelectTrigger className="border-muted">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="LOW">Basse</SelectItem>
-              <SelectItem value="MEDIUM">Moyenne</SelectItem>
-              <SelectItem value="HIGH">Haute</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-foreground">Date d'échéance</label>
-        <Input
-          type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-          className="border-muted focus:border-secondary"
-        />
-      </div>
-
-      <Button type="submit" className="w-full bg-primary hover:bg-primary-600 shadow-sm" disabled={isLoading || !title.trim()}>
-        {isLoading ? 'Enregistrement...' : initial ? 'Modifier la tâche' : 'Créer la tâche'}
-      </Button>
-    </form>
   )
 }
