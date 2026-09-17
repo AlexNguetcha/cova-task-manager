@@ -9,8 +9,8 @@ import { Label } from '@/components/ui/label'
 import { ListTodo } from 'lucide-react'
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email('Adresse email invalide'),
+  password: z.string().min(1, 'Mot de passe requis'),
 })
 
 type LoginForm = z.infer<typeof loginSchema>
@@ -33,7 +33,7 @@ export default function Login() {
       await login(data)
       navigate('/')
     } catch (err: any) {
-      const message = err.response?.data?.message || 'Invalid credentials'
+      const message = err.response?.data?.message || 'Identifiants invalides'
       setError('email', { message })
     }
   }
@@ -46,9 +46,9 @@ export default function Login() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
             <ListTodo className="h-6 w-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
+          <h1 className="text-2xl font-bold text-foreground">Bon retour</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Sign in to your account
+            Connectez-vous à votre compte
           </p>
         </div>
 
@@ -59,7 +59,7 @@ export default function Login() {
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder="vous@exemple.com"
               {...register('email')}
             />
             {errors.email && (
@@ -68,11 +68,11 @@ export default function Login() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Mot de passe</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Enter your password"
+              placeholder="Entrez votre mot de passe"
               {...register('password')}
             />
             {errors.password && (
@@ -83,14 +83,14 @@ export default function Login() {
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Signing in...' : 'Sign in'}
+            {isLoading ? 'Connexion...' : 'Se connecter'}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{' '}
+          Vous n'avez pas de compte ?{' '}
           <Link to="/register" className="font-medium text-primary hover:underline">
-            Sign up
+            S'inscrire
           </Link>
         </p>
       </div>

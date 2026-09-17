@@ -9,15 +9,15 @@ import type { Task, TaskStatus, TaskPriority, TaskFormData } from '@/types'
 import { useToast } from '@/hooks/use-toast'
 
 const statusConfig: Record<TaskStatus, { label: string; icon: typeof Circle; color: string }> = {
-  TODO: { label: 'Todo', icon: Circle, color: 'text-muted-foreground' },
-  IN_PROGRESS: { label: 'In Progress', icon: Clock, color: 'text-secondary' },
-  COMPLETED: { label: 'Completed', icon: CheckCircle2, color: 'text-primary' },
+  TODO: { label: 'À faire', icon: Circle, color: 'text-muted-foreground' },
+  IN_PROGRESS: { label: 'En cours', icon: Clock, color: 'text-secondary' },
+  COMPLETED: { label: 'Terminé', icon: CheckCircle2, color: 'text-primary' },
 }
 
 const priorityConfig: Record<TaskPriority, { label: string; color: string }> = {
-  LOW: { label: 'Low', color: 'text-muted-foreground' },
-  MEDIUM: { label: 'Medium', color: 'text-secondary' },
-  HIGH: { label: 'High', color: 'text-destructive' },
+  LOW: { label: 'Basse', color: 'text-muted-foreground' },
+  MEDIUM: { label: 'Moyenne', color: 'text-secondary' },
+  HIGH: { label: 'Haute', color: 'text-destructive' },
 }
 
 export default function Dashboard() {
@@ -51,9 +51,9 @@ export default function Dashboard() {
     try {
       await createTask.mutateAsync(data)
       closeDialog()
-      toast({ title: 'Task created' })
+      toast({ title: 'Tâche créée' })
     } catch {
-      toast({ title: 'Failed to create task', variant: 'destructive' })
+      toast({ title: 'Échec de la création', variant: 'destructive' })
     }
   }
 
@@ -62,18 +62,18 @@ export default function Dashboard() {
     try {
       await updateTask.mutateAsync({ id: editingTask.id, ...data })
       closeDialog()
-      toast({ title: 'Task updated' })
+      toast({ title: 'Tâche modifiée' })
     } catch {
-      toast({ title: 'Failed to update task', variant: 'destructive' })
+      toast({ title: 'Échec de la modification', variant: 'destructive' })
     }
   }
 
   const handleDelete = async (id: number) => {
     try {
       await deleteTask.mutateAsync(id)
-      toast({ title: 'Task deleted' })
+      toast({ title: 'Tâche supprimée' })
     } catch {
-      toast({ title: 'Failed to delete task', variant: 'destructive' })
+      toast({ title: 'Échec de la suppression', variant: 'destructive' })
     }
   }
 
@@ -81,10 +81,10 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Tasks</h1>
+        <h1 className="text-2xl font-bold text-foreground">Tâches</h1>
         <Button onClick={openCreate}>
           <Plus className="mr-2 h-4 w-4" />
-          New Task
+          Nouvelle tâche
         </Button>
       </div>
 
@@ -92,7 +92,7 @@ export default function Dashboard() {
       <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeDialog() }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingTask ? 'Edit Task' : 'Create Task'}</DialogTitle>
+            <DialogTitle>{editingTask ? 'Modifier la tâche' : 'Nouvelle tâche'}</DialogTitle>
           </DialogHeader>
           <TaskForm
             key={editingTask?.id || 'create'}
@@ -108,7 +108,7 @@ export default function Dashboard() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search tasks..."
+            placeholder="Rechercher des tâches..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -116,24 +116,24 @@ export default function Dashboard() {
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-36">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder="Statut" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value=" ">All</SelectItem>
-            <SelectItem value="TODO">Todo</SelectItem>
-            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-            <SelectItem value="COMPLETED">Completed</SelectItem>
+            <SelectItem value=" ">Tous</SelectItem>
+            <SelectItem value="TODO">À faire</SelectItem>
+            <SelectItem value="IN_PROGRESS">En cours</SelectItem>
+            <SelectItem value="COMPLETED">Terminé</SelectItem>
           </SelectContent>
         </Select>
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
           <SelectTrigger className="w-36">
-            <SelectValue placeholder="Priority" />
+            <SelectValue placeholder="Priorité" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value=" ">All</SelectItem>
-            <SelectItem value="HIGH">High</SelectItem>
-            <SelectItem value="MEDIUM">Medium</SelectItem>
-            <SelectItem value="LOW">Low</SelectItem>
+            <SelectItem value=" ">Toutes</SelectItem>
+            <SelectItem value="HIGH">Haute</SelectItem>
+            <SelectItem value="MEDIUM">Moyenne</SelectItem>
+            <SelectItem value="LOW">Basse</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -148,7 +148,7 @@ export default function Dashboard() {
       {/* Error */}
       {error && (
         <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
-          Failed to load tasks. Please try again.
+          Échec du chargement des tâches. Veuillez réessayer.
         </div>
       )}
 
@@ -158,9 +158,9 @@ export default function Dashboard() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
             <Plus className="h-6 w-6 text-muted-foreground" />
           </div>
-          <h3 className="font-medium text-foreground">No tasks yet</h3>
+          <h3 className="font-medium text-foreground">Aucune tâche</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Create your first task to get started.
+            Créez votre première tâche pour commencer.
           </p>
         </div>
       )}
@@ -202,7 +202,7 @@ export default function Dashboard() {
                     </span>
                     {task.dueDate && (
                       <span className={isOverdue ? 'text-destructive font-medium' : ''}>
-                        Due: {new Date(task.dueDate).toLocaleDateString()}
+                        Échéance : {new Date(task.dueDate).toLocaleDateString('fr-FR')}
                       </span>
                     )}
                   </div>
@@ -265,11 +265,11 @@ function TaskForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <label className="text-sm font-medium">Title</label>
+        <label className="text-sm font-medium">Titre</label>
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="What needs to be done?"
+          placeholder="Que devez-vous faire ?"
           autoFocus
         />
       </div>
@@ -279,7 +279,7 @@ function TaskForm({
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Optional details..."
+          placeholder="Détails optionnels..."
           rows={3}
           className="flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
@@ -287,36 +287,36 @@ function TaskForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Status</label>
+          <label className="text-sm font-medium">Statut</label>
           <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="TODO">Todo</SelectItem>
-              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-              <SelectItem value="COMPLETED">Completed</SelectItem>
+              <SelectItem value="TODO">À faire</SelectItem>
+              <SelectItem value="IN_PROGRESS">En cours</SelectItem>
+              <SelectItem value="COMPLETED">Terminé</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Priority</label>
+          <label className="text-sm font-medium">Priorité</label>
           <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="LOW">Low</SelectItem>
-              <SelectItem value="MEDIUM">Medium</SelectItem>
-              <SelectItem value="HIGH">High</SelectItem>
+              <SelectItem value="LOW">Basse</SelectItem>
+              <SelectItem value="MEDIUM">Moyenne</SelectItem>
+              <SelectItem value="HIGH">Haute</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Due Date</label>
+        <label className="text-sm font-medium">Date d'échéance</label>
         <Input
           type="date"
           value={dueDate}
@@ -325,7 +325,7 @@ function TaskForm({
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading || !title.trim()}>
-        {isLoading ? 'Saving...' : initial ? 'Update Task' : 'Create Task'}
+        {isLoading ? 'Enregistrement...' : initial ? 'Modifier la tâche' : 'Créer la tâche'}
       </Button>
     </form>
   )

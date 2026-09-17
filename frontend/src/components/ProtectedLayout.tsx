@@ -19,7 +19,7 @@ export function ProtectedLayout() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <ListTodo className="h-4 w-4 text-white" />
             </div>
-            <span className="text-lg font-semibold text-primary">Cova Tasks</span>
+            <span className="text-lg font-semibold text-primary">Cova Tâches</span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -28,7 +28,7 @@ export function ProtectedLayout() {
             </span>
             <Button variant="ghost" size="sm" onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />
-              Logout
+              Déconnexion
             </Button>
           </div>
         </div>
