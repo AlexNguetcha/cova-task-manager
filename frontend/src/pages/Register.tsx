@@ -40,72 +40,77 @@ export default function Register() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 px-4">
       <div className="w-full max-w-sm animate-fade-in">
         {/* Logo */}
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <ListTodo className="h-6 w-6 text-white" />
+        <div className="mb-10 text-center">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-600 shadow-lg shadow-primary/20">
+            <ListTodo className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Créer un compte</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Commencez avec Cova Tasks
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Créer un compte</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Commencez avec Cova
           </p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nom</Label>
-            <Input
-              id="name"
-              placeholder="Votre nom"
-              {...register('name')}
-            />
-            {errors.name && (
-              <p className="text-xs text-destructive">{errors.name.message}</p>
-            )}
-          </div>
+        {/* Card */}
+        <div className="rounded-2xl border border-muted bg-card p-8 shadow-sm">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="name">Nom</Label>
+              <Input
+                id="name"
+                placeholder="Votre nom"
+                className="border-muted focus:border-secondary"
+                {...register('name')}
+              />
+              {errors.name && (
+                <p className="text-xs text-destructive">{errors.name.message}</p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="vous@exemple.com"
-              {...register('email')}
-            />
-            {errors.email && (
-              <p className="text-xs text-destructive">{errors.email.message}</p>
-            )}
-          </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="vous@exemple.com"
+                className="border-muted focus:border-secondary"
+                {...register('email')}
+              />
+              {errors.email && (
+                <p className="text-xs text-destructive">{errors.email.message}</p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Mot de passe</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Au moins 6 caractères"
-              {...register('password')}
-            />
-            {errors.password && (
-              <p className="text-xs text-destructive">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Mot de passe</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Au moins 6 caractères"
+                className="border-muted focus:border-secondary"
+                {...register('password')}
+              />
+              {errors.password && (
+                <p className="text-xs text-destructive">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Création du compte...' : 'Créer un compte'}
-          </Button>
-        </form>
+            <Button type="submit" className="w-full bg-secondary hover:bg-secondary-600 shadow-sm" disabled={isLoading}>
+              {isLoading ? 'Création du compte...' : 'Créer un compte'}
+            </Button>
+          </form>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Vous avez déjà un compte ?{' '}
-          <Link to="/login" className="font-medium text-primary hover:underline">
-            Se connecter
-          </Link>
-        </p>
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            Vous avez déjà un compte ?{' '}
+            <Link to="/login" className="font-medium text-primary hover:text-primary-600 transition-colors">
+              Se connecter
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   )
