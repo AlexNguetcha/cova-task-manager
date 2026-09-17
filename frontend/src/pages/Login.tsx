@@ -68,7 +68,7 @@ export default function Login() {
 
       {/* ── Right Panel ── */}
       <div className="flex-1 flex items-center justify-center px-6 bg-gradient-to-br from-primary/[0.02] via-background to-secondary/[0.02]">
-        <div className="w-full max-w-sm animate-fade-in">
+        <div className="w-full max-w-md animate-fade-in">
           {/* Mobile logo */}
           <div className="lg:hidden mb-10 text-center">
             <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-600 shadow-lg shadow-primary/20">
@@ -119,7 +119,7 @@ export default function Login() {
                 )}
               </div>
 
-              <Button type="submit" className="w-full h-11 bg-secondary hover:bg-secondary-600 shadow-sm shadow-secondary/20 text-sm font-medium" disabled={isLoading}>
+              <Button type="submit" className="w-full h-11 bg-primary hover:bg-primary-600 shadow-sm shadow-primary/20 text-sm font-medium" disabled={isLoading}>
                 {isLoading ? 'Connexion...' : 'Se connecter'}
               </Button>
             </form>

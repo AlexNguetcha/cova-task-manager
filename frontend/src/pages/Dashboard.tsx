@@ -90,7 +90,7 @@ export default function Dashboard() {
             {tasks ? `${tasks.length} tâche${tasks.length > 1 ? 's' : ''}` : 'Gérez vos activités'}
           </p>
         </div>
-        <Button onClick={openCreate} className="bg-secondary hover:bg-secondary-600 shadow-sm">
+        <Button onClick={openCreate} className="bg-primary hover:bg-primary-600 shadow-sm">
           <Plus className="mr-2 h-4 w-4" />
           Nouvelle tâche
         </Button>
@@ -156,7 +156,7 @@ export default function Dashboard() {
           <p className="mt-2 text-sm text-muted-foreground max-w-xs mx-auto">
             Créez votre première tâche et organisez votre travail en toute simplicité.
           </p>
-          <Button onClick={openCreate} className="mt-6 bg-secondary hover:bg-secondary-600 shadow-sm">
+          <Button onClick={openCreate} className="mt-6 bg-primary hover:bg-primary-600 shadow-sm">
             <Plus className="mr-2 h-4 w-4" />
             Créer une tâche
           </Button>
@@ -346,7 +346,7 @@ function TaskForm({
         />
       </div>
 
-      <Button type="submit" className="w-full bg-secondary hover:bg-secondary-600 shadow-sm" disabled={isLoading || !title.trim()}>
+      <Button type="submit" className="w-full bg-primary hover:bg-primary-600 shadow-sm" disabled={isLoading || !title.trim()}>
         {isLoading ? 'Enregistrement...' : initial ? 'Modifier la tâche' : 'Créer la tâche'}
       </Button>
     </form>
