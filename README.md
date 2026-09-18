@@ -1,7 +1,7 @@
 # Cova Task Manager
 
 Task Manager - Spring Boot, React + Vite, Flutter.  
-Déploiement sur Vercel + Railway.
+Déploiement sur Vercel + Railway (alternative GCP suite à un problème de billing).
 
 ---
 
@@ -38,6 +38,8 @@ docker compose up --build
 ---
 
 ## Déploiement
+
+> **Note :** Le déploiement initial était prévu sur GCP (Cloud Run + Cloud SQL) via GitHub Actions et Terraform. Un problème de billing GCP nous a orientés vers Vercel + Railway comme alternative gratuite et fonctionnelle. Les fichiers de configuration GCP (`deploy/`, `.github/workflows/ci-cd.yml`) sont conservés dans le repo.
 
 ### 🔗 Liens
 
@@ -108,6 +110,7 @@ docker compose up --build
 |------|--------|
 | Connexion | ![](screenshots/web-login.png) |
 | Inscription | ![](screenshots/web-register.png) |
+| Liste des tâches (ligne) | ![](screenshots/web-tasks-list-row.png) |
 | Liste des tâches (grille) | ![](screenshots/web-task-list-grid-view.png) |
 | Nouvelle tâche | ![](screenshots/web-new-task.png) |
 | Suppression | ![](screenshots/web-task-delete-confirmation.png) |
