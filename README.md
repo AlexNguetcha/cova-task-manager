@@ -39,6 +39,14 @@ docker compose up --build
 
 ## Déploiement
 
+### 🔗 Liens
+
+| Service | URL |
+|---------|-----|
+| **Frontend** | [https://cova-task-manager.vercel.app](https://cova-task-manager.vercel.app) |
+| **Backend API** | [https://cova-backend.up.railway.app](https://cova-backend.up.railway.app) |
+| **Swagger UI** | [https://cova-backend.up.railway.app/swagger-ui.html](https://cova-backend.up.railway.app/swagger-ui.html) |
+
 ### Backend → Railway
 
 1. Créer un compte sur [railway.app](https://railway.app) (GitHub login)
@@ -79,6 +87,28 @@ docker compose up --build
 6. Déployer → Vercel génère une URL : `https://cova-task-manager.vercel.app`
 
 > Le fichier `vercel.json` est déjà configuré pour rediriger `/api/*` vers le backend Railway.
+
+---
+
+## Captures d'écran
+
+### Web
+
+| Page | Aperçu |
+|------|--------|
+| Connexion | ![](screenshots/web-login.png) |
+| Inscription | ![](screenshots/web-register.png) |
+| Liste des tâches (grille) | ![](screenshots/web-task-list-grid-view.png) |
+| Nouvelle tâche | ![](screenshots/web-new-task.png) |
+| Suppression | ![](screenshots/web-task-delete-confirmation.png) |
+
+### Mobile (Flutter)
+
+| Page | Aperçu |
+|------|--------|
+| Connexion | ![](screenshots/mobile-login.png) |
+| Liste des tâches | ![](screenshots/mobile-tasks-list.png) |
+| Détails d'une tâche | ![](screenshots/mobile-task-details.png) |
 
 ---
 
