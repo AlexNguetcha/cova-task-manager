@@ -17,7 +17,11 @@ class PaginatedResult<T> {
 }
 
 class ApiService {
-  static const String _baseUrl = 'http://10.0.2.2:8082/api';
+  // Change this to your Railway URL for production
+  static const String _baseUrl = String.fromEnvironment(
+    'API_URL',
+    defaultValue: 'http://10.0.2.2:8082/api',
+  );
   static const _storage = FlutterSecureStorage();
 
   // ── Auth ──

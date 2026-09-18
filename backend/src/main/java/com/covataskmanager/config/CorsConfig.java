@@ -17,7 +17,8 @@ public class CorsConfig {
         config.setAllowedOriginPatterns(List.of(
             "http://localhost:*",
             "https://*.vercel.app",
-            "https://*.railway.app"
+            "https://*.railway.app",
+            "https://*.up.railway.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
