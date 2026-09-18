@@ -1,9 +1,20 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/auth.dart';
 import '../models/task.dart';
+
+class PaginatedResult<T> {
+  final List<T> items;
+  final int totalPages;
+  final int totalElements;
+
+  PaginatedResult({
+    required this.items,
+    required this.totalPages,
+    required this.totalElements,
+  });
+}
 
 class ApiService {
   static const String _baseUrl = 'http://10.0.2.2:8082/api';
@@ -53,21 +64,29 @@ class ApiService {
 
   // ── Tasks ──
 
-  Future<List<Task>> getTasks({String? status, String? priority, String? search}) async {
+  Future<PaginatedResult<Task>> getTasks({String? status, String? priority, String? search, int page = 0, int size = 10}) async {
     final token = await getToken();
     final params = <String, String>{};
     if (status != null && status.isNotEmpty) params['status'] = status;
     if (priority != null && priority.isNotEmpty) params['priority'] = priority;
     if (search != null && search.isNotEmpty) params['search'] = search;
-    final uri = Uri.parse('$_baseUrl/tasks').replace(queryParameters: params.isNotEmpty ? params : null);
+    params['page'] = page.toString();
+    params['size'] = size.toString();
+    final uri = Uri.parse('$_baseUrl/tasks').replace(queryParameters: params);
 
     final res = await http.get(uri, headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
     });
     if (res.statusCode != 200) throw Exception('Erreur chargement');
-    final List<dynamic> list = jsonDecode(res.body);
-    return list.map((e) => Task.fromJson(e)).toList();
+    final Map<String, dynamic> body = jsonDecode(res.body);
+    final List<dynamic> list = body['content'] as List<dynamic>;
+    final tasks = list.map((e) => Task.fromJson(e)).toList();
+    return PaginatedResult(
+      items: tasks,
+      totalPages: body['totalPages'] as int,
+      totalElements: body['totalElements'] as int,
+    );
   }
 
   Future<Task> createTask(Task task) async {
