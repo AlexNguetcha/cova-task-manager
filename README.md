@@ -1,7 +1,7 @@
 # Cova Task Manager
 
 Task Manager — Spring Boot, React + Vite, Flutter.  
-Déploiement GCP via Docker & GitHub Actions.
+Déploiement sur Vercel + Railway.
 
 ---
 
@@ -12,7 +12,7 @@ Déploiement GCP via Docker & GitHub Actions.
 | Backend | Java Spring Boot, Spring Data JPA, Spring Security + JWT, MySQL |
 | Frontend | React + Vite + TypeScript, Shadcn UI + Tailwind, TanStack Query |
 | Mobile | Flutter + Dart |
-| CI/CD | GitHub Actions, Docker, Google Cloud Run, Terraform |
+| CI/CD | GitHub Actions, Docker |
 
 ---
 
@@ -62,17 +62,48 @@ make clean    # down + delete volumes
 
 ---
 
-## Déploiement GCP
+## Déploiement (gratuit)
 
-```bash
-# Infra
-cd deploy/terraform && terraform apply
+### Backend → Railway
 
-# Cloud Build (alternative à GitHub Actions)
-gcloud builds submit
-```
+1. Créer un compte sur [railway.app](https://railway.app) (GitHub login)
+2. Cliquer **New Project** → **Deploy from GitHub repo**
+3. Sélectionner `cova-task-manager`
+4. Dans **Settings**, définir :
+   - **Root Directory** : `backend`
+   - **Start Command** : `./mvnw spring-boot:run -Dspring-boot.run.profiles=railway`
+5. Ajouter un **MySQL** addon (Railway le crée automatiquement)
+6. Ajouter les variables d'environnement :
 
-**Secrets GitHub requis :** `GCP_PROJECT_ID`, `GCP_SA_KEY`, `cova-db-user`, `cova-db-password`, `jwt-secret`.
+   | Variable | Valeur |
+   |----------|--------|
+   | `JWT_SECRET` | une clé secrète (min 256 bits) |
+   | `SPRING_PROFILES_ACTIVE` | `railway` |
+   | `MYSQL_HOST` | laissé vide (Railway injecte automatiquement) |
+   | `MYSQL_PORT` | `3306` |
+   | `MYSQL_DATABASE` | `railway` |
+   | `MYSQL_USER` | fourni par Railway |
+   | `MYSQL_PASSWORD` | fourni par Railway |
+
+7. Railway génère une URL : `https://cova-backend.up.railway.app`
+
+### Frontend → Vercel
+
+1. Créer un compte sur [vercel.com](https://vercel.com) (GitHub login)
+2. Cliquer **Add New** → **Project**
+3. Sélectionner `cova-task-manager`
+4. Configurer :
+   - **Root Directory** : `frontend`
+   - **Framework Preset** : `Vite`
+5. Ajouter la variable d'environnement :
+
+   | Variable | Valeur |
+   |----------|--------|
+   | `VITE_API_URL` | `https://cova-backend.up.railway.app` |
+
+6. Déployer → Vercel génère une URL : `https://cova-task-manager.vercel.app`
+
+> Le fichier `vercel.json` est déjà configuré pour rediriger `/api/*` vers le backend Railway.
 
 ---
 
