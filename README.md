@@ -1,6 +1,6 @@
 # Cova Task Manager
 
-Task Manager — Spring Boot, React + Vite, Flutter.  
+Task Manager - Spring Boot, React + Vite, Flutter.  
 Déploiement sur Vercel + Railway.
 
 ---
@@ -37,32 +37,7 @@ docker compose up --build
 
 ---
 
-## Commandes
-
-```bash
-make up       # docker compose up -d
-make down     # docker compose down
-make logs     # docker compose logs -f
-make clean    # down + delete volumes
-```
-
----
-
-## API
-
-| Méthode | Endpoint | Auth |
-|---------|----------|------|
-| POST | `/api/auth/register` | ❌ |
-| POST | `/api/auth/login` | ❌ |
-| POST | `/api/auth/refresh` | ❌ |
-| GET | `/api/tasks?status=&search=&page=&size=` | ✅ |
-| POST | `/api/tasks` | ✅ |
-| PUT | `/api/tasks/{id}` | ✅ |
-| DELETE | `/api/tasks/{id}` | ✅ |
-
----
-
-## Déploiement (gratuit)
+## Déploiement
 
 ### Backend → Railway
 
@@ -118,4 +93,4 @@ cd frontend && npm test      # Vitest
 
 ## Auteur
 
-**Alex Nguetcha** — [GitHub](https://github.com/AlexNguetcha)
+**Alex Nguetcha** - [GitHub](https://github.com/AlexNguetcha)

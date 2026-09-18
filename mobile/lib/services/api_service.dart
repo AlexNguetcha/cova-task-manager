@@ -20,7 +20,8 @@ class ApiService {
   // Change this to your Railway URL for production
   static const String _baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'http://10.0.2.2:8082/api',
+    // defaultValue: 'http://10.0.2.2:8082/api',
+    defaultValue: 'https://task-manager-api-production.up.railway.app/api',
   );
   static const _storage = FlutterSecureStorage();
 
