@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Profile({"dev", "docker"})
+@Profile({"dev", "docker", "railway"})
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
