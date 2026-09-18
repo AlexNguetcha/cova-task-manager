@@ -30,7 +30,7 @@ docker compose up --build
 |---------|-----|
 | Frontend | http://localhost |
 | API | http://localhost:8080 |
-| Swagger | http://localhost:8080/swagger-ui.html |
+| Swagger | http://localhost:8080/swagger-ui/index.html |
 | MySQL | localhost:3307 |
 
 **Demo :** `demo@cova.africa` / `demo1234`
@@ -45,9 +45,12 @@ docker compose up --build
 |---------|-----|
 | **Frontend** | [https://cova-task-manager.vercel.app](https://cova-task-manager.vercel.app) |
 | **Backend API** | [https://cova-backend.up.railway.app](https://cova-backend.up.railway.app) |
-| **Swagger UI** | [https://cova-backend.up.railway.app/swagger-ui.html](https://cova-backend.up.railway.app/swagger-ui.html) |
+| **Swagger UI** | [https://cova-backend.up.railway.app/swagger-ui/index.html](https://cova-backend.up.railway.app/swagger-ui/index.html) |
 
 ### Backend → Railway
+
+<details>
+<summary>Voir les étapes</summary>
 
 1. Créer un compte sur [railway.app](https://railway.app) (GitHub login)
 2. Cliquer **New Project** → **Deploy from GitHub repo**
@@ -70,7 +73,12 @@ docker compose up --build
 
 7. Railway génère une URL : `https://cova-backend.up.railway.app`
 
+</details>
+
 ### Frontend → Vercel
+
+<details>
+<summary>Voir les étapes</summary>
 
 1. Créer un compte sur [vercel.com](https://vercel.com) (GitHub login)
 2. Cliquer **Add New** → **Project**
@@ -87,6 +95,8 @@ docker compose up --build
 6. Déployer → Vercel génère une URL : `https://cova-task-manager.vercel.app`
 
 > Le fichier `vercel.json` est déjà configuré pour rediriger `/api/*` vers le backend Railway.
+
+</details>
 
 ---
 
