@@ -102,6 +102,12 @@ docker compose up --build
 
 ---
 
+## Démo vidéo
+
+[![Loom Demo](https://cdn.loom.com/sessions/thumbnails/6c76e3f196aa481d822fb97a1a9c981c-with-play.gif)](https://www.loom.com/share/6c76e3f196aa481d822fb97a1a9c981c)
+
+---
+
 ## Captures d'écran
 
 ### Web
